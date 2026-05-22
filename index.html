@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taskr — Get it done</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181c;
+    --border: #2a2a30;
+    --accent: #c8f135;
+    --accent-dim: #a3c82a;
+    --text: #f0f0f0;
+    --muted: #666672;
+    --danger: #ff4d4d;
+    --high: #ff7a45;
+    --medium: #c8f135;
+    --low: #4db8ff;
+    --done-bg: #141416;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* Header */
+  header {
+    padding: 40px 48px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .logo {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .logo span { color: var(--muted); font-weight: 400; }
+  .stats {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-align: right;
+    line-height: 1.7;
+  }
+  .stats strong { color: var(--accent); }
+
+  /* Main layout */
+  main { max-width: 760px; margin: 0 auto; padding: 40px 24px 0; }
+
+  /* Add form */
+  .add-form {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 40px;
+  }
+  .add-form h2 {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  input[type="text"], select, input[type="date"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus, select:focus, input[type="date"]:focus {
+    border-color: var(--accent);
+  }
+  #new-text { flex: 1; }
+  .meta-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  select { cursor: pointer; }
+  input[type="date"] { color-scheme: dark; }
+  button.add-btn {
+    background: var(--accent);
+    color: #0e0e10;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 12px 28px;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+  }
+  button.add-btn:hover { background: var(--accent-dim); }
+  button.add-btn:active { transform: scale(0.97); }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .filter-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .filter-btn.active, .filter-btn:hover {
+    background: var(--accent);
+    color: #0e0e10;
+    border-color: var(--accent);
+  }
+
+  /* Todo list */
+  .section-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+  .todo-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+
+  .todo-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s, opacity 0.2s;
+    animation: slideIn 0.2s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .todo-item:hover { border-color: #3a3a42; }
+  .todo-item.done { opacity: 0.45; background: var(--done-bg); }
+
+  /* Checkbox */
+  .check-btn {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    background: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    color: transparent;
+    font-size: 13px;
+  }
+  .check-btn:hover { border-color: var(--accent); }
+  .todo-item.done .check-btn {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0e0e10;
+  }
+
+  /* Priority dot */
+  .priority-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .priority-dot.high { background: var(--high); }
+  .priority-dot.medium { background: var(--medium); }
+  .priority-dot.low { background: var(--low); }
+
+  /* Content */
+  .todo-content { flex: 1; min-width: 0; }
+  .todo-text {
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
+  .todo-meta {
+    margin-top: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--muted);
+    display: flex; gap: 12px; flex-wrap: wrap;
+  }
+  .overdue { color: var(--danger) !important; font-weight: 500; }
+
+  /* Edit / Delete */
+  .todo-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .icon-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 5px 9px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'DM Mono', monospace;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn.del:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Edit inline */
+  .edit-row {
+    display: flex; gap: 8px; flex-wrap: wrap; width: 100%;
+  }
+  .edit-row input { flex: 1; font-size: 0.9rem; padding: 8px 12px; }
+  .save-btn {
+    background: var(--accent); color: #0e0e10;
+    border: none; border-radius: 8px;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.85rem; padding: 8px 16px; cursor: pointer;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 0;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+  }
+  .empty .emoji { font-size: 2.5rem; display: block; margin-bottom: 12px; }
+
+  /* Overdue section gap */
+  .todos-section + .todos-section { margin-top: 32px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Taskr<span>.</span></div>
+  </div>
+  <div class="stats" id="stats">Loading…</div>
+</header>
+
+<main>
+  <!-- Add Form -->
+  <div class="add-form">
+    <h2>New Task</h2>
+    <div class="input-row">
+      <input type="text" id="new-text" placeholder="What needs to be done?" />
+      <button class="add-btn" onclick="addTodo()">+ Add</button>
+    </div>
+    <div class="meta-row">
+      <select id="new-priority">
+        <option value="high">🔴 High</option>
+        <option value="medium" selected>🟡 Medium</option>
+        <option value="low">🔵 Low</option>
+      </select>
+      <input type="date" id="new-due" title="Due date (optional)" />
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+    <button class="filter-btn" onclick="setFilter('active', this)">Active</button>
+    <button class="filter-btn" onclick="setFilter('done', this)">Done</button>
+    <button class="filter-btn" onclick="setFilter('high', this)">🔴 High</button>
+    <button class="filter-btn" onclick="setFilter('overdue', this)">⚠ Overdue</button>
+  </div>
+
+  <!-- List -->
+  <div id="todo-container"></div>
+</main>
+
+<script>
+let allTodos = [];
+let currentFilter = 'all';
+
+async function loadTodos() {
+  const res = await fetch('/todos');
+  allTodos = await res.json();
+  renderTodos();
+  updateStats();
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTodos();
+}
+
+function isOverdue(todo) {
+  if (!todo.due_date || todo.done) return false;
+  return new Date(todo.due_date) < new Date(new Date().toDateString());
+}
+
+function getFiltered() {
+  return allTodos.filter(t => {
+    if (currentFilter === 'active') return !t.done;
+    if (currentFilter === 'done') return t.done;
+    if (currentFilter === 'high') return t.priority === 'high' && !t.done;
+    if (currentFilter === 'overdue') return isOverdue(t);
+    return true;
+  });
+}
+
+function renderTodos() {
+  const container = document.getElementById('todo-container');
+  const filtered = getFiltered();
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty"><span class="emoji">✓</span>Nothing here. Add a task above!</div>`;
+    return;
+  }
+  const active = filtered.filter(t => !t.done);
+  const done = filtered.filter(t => t.done);
+  let html = '';
+  if (active.length) {
+    html += `<div class="todos-section"><div class="section-label">Active — ${active.length}</div><ul class="todo-list">${active.map(todoHTML).join('')}</ul></div>`;
+  }
+  if (done.length) {
+    html += `<div class="todos-section"><div class="section-label">Completed — ${done.length}</div><ul class="todo-list">${done.map(todoHTML).join('')}</ul></div>`;
+  }
+  container.innerHTML = html;
+}
+
+function todoHTML(t) {
+  const over = isOverdue(t);
+  const dueTxt = t.due_date ? `<span class="${over ? 'overdue' : ''}">📅 ${t.due_date}${over ? ' · OVERDUE' : ''}</span>` : '';
+  const priLabel = { high: '🔴 High', medium: '🟡 Medium', low: '🔵 Low' }[t.priority];
+  return `
+  <li class="todo-item ${t.done ? 'done' : ''}" id="todo-${t.id}">
+    <button class="check-btn" onclick="toggleDone(${t.id})" title="Toggle complete">✓</button>
+    <span class="priority-dot ${t.priority}"></span>
+    <div class="todo-content">
+      <div class="todo-text" id="text-${t.id}">${escHtml(t.text)}</div>
+      <div class="todo-meta">
+        <span>${priLabel}</span>
+        ${dueTxt}
+      </div>
+    </div>
+    <div class="todo-actions">
+      <button class="icon-btn" onclick="startEdit(${t.id})" title="Edit">✎</button>
+      <button class="icon-btn del" onclick="deleteTodo(${t.id})" title="Delete">✕</button>
+    </div>
+  </li>`;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateStats() {
+  const total = allTodos.length;
+  const done = allTodos.filter(t => t.done).length;
+  const overdue = allTodos.filter(t => isOverdue(t)).length;
+  document.getElementById('stats').innerHTML =
+    `<strong>${done}</strong>/${total} done` +
+    (overdue ? `<br><span style="color:var(--danger)">${overdue} overdue</span>` : '');
+}
+
+async function addTodo() {
+  const text = document.getElementById('new-text').value.trim();
+  if (!text) { document.getElementById('new-text').focus(); return; }
+  const priority = document.getElementById('new-priority').value;
+  const due_date = document.getElementById('new-due').value || null;
+  await fetch('/todos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, priority, due_date })
+  });
+  document.getElementById('new-text').value = '';
+  document.getElementById('new-due').value = '';
+  loadTodos();
+}
+
+async function toggleDone(id) {
+  const todo = allTodos.find(t => t.id === id);
+  await fetch(`/todos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ done: todo.done ? 0 : 1 })
+  });
+  loadTodos();
+}
+
+async function deleteTodo(id) {
+  await fetch(`/todos/${id}`, { method: 'DELETE' });
+  loadTodos();
+}
+
+function startEdit(id) {
+  const todo = allTodos.find(t => t.id === id);
+  const li = document.getElementById(`todo-${id}`);
+  li.innerHTML = `
+    <div class="edit-row">
+      <input type="text" id="edit-input-${id}" value="${escHtml(todo.text)}" />
+      <select id="edit-pri-${id}">
+        <option value="high" ${todo.priority==='high'?'selected':''}>🔴 High</option>
+        <option value="medium" ${todo.priority==='medium'?'selected':''}>🟡 Medium</option>
+        <option value="low" ${todo.priority==='low'?'selected':''}>🔵 Low</option>
+      </select>
+      <input type="date" id="edit-due-${id}" value="${todo.due_date||''}" />
+      <button class="save-btn" onclick="saveEdit(${id})">Save</button>
+      <button class="icon-btn" onclick="renderTodos()">✕</button>
+    </div>`;
+  document.getElementById(`edit-input-${id}`).focus();
+}
+
+async function saveEdit(id) {
+  const text = document.getElementById(`edit-input-${id}`).value.trim();
+  if (!text) return;
+  const priority = document.getElementById(`edit-pri-${id}`).value;
+  const due_date = document.getElementById(`edit-due-${id}`).value || null;
+  await fetch(`/todos/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, priority, due_date })
+  });
+  loadTodos();
+}
+
+// Enter key to add
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement.id === 'new-text') addTodo();
+});
+
+loadTodos();
+</script>
+</body>
+</html>
